@@ -44,8 +44,10 @@ class IntervalReading:
     def from_dict(cls, data: dict[str, str]) -> "IntervalReading":
         """Create an IntervalReading from API response data."""
         date_str = data["date"]
-        if "T" in date_str:
-            parsed_date = datetime.fromisoformat(date_str).date()
+        # Handle both ISO format with T and space-separated format
+        if "T" in date_str or " " in date_str:
+            # Replace space with T for fromisoformat compatibility
+            parsed_date = datetime.fromisoformat(date_str.replace(" ", "T")).date()
         else:
             parsed_date = date.fromisoformat(date_str)
 
