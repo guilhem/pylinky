@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import ssl
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import date, timedelta
 from typing import TYPE_CHECKING
 
+import certifi
 import httpx
 import jwt
 
@@ -25,6 +27,17 @@ if TYPE_CHECKING:
 
 BASE_URL = "https://conso.boris.sh/api"
 DEFAULT_USER_AGENT = "pylinky"
+
+
+def create_ssl_context() -> ssl.SSLContext:
+    """Create an SSL context with certifi certificates.
+
+    This function performs blocking I/O and should be called from
+    a thread executor when used in async contexts.
+    """
+    ctx = ssl.create_default_context()
+    ctx.load_verify_locations(certifi.where())
+    return ctx
 
 
 def _extract_prms(token: str) -> list[str]:
@@ -284,6 +297,18 @@ class AsyncLinkyClient:
         ...     data = await client.get_daily_consumption()
         ...     for reading in data.interval_reading:
         ...         print(f"{reading.date}: {reading.value} Wh")
+
+    For use in Home Assistant or other async frameworks that detect blocking calls,
+    you should pre-create the SSL context in an executor:
+
+        >>> import asyncio
+        >>> from pylinky import AsyncLinkyClient, create_ssl_context
+        >>>
+        >>> async def main():
+        ...     loop = asyncio.get_event_loop()
+        ...     ssl_context = await loop.run_in_executor(None, create_ssl_context)
+        ...     async with AsyncLinkyClient(token="...", ssl_context=ssl_context) as client:
+        ...         data = await client.get_daily_consumption()
     """
 
     def __init__(
@@ -293,6 +318,7 @@ class AsyncLinkyClient:
         prm: str | None = None,
         user_agent: str = DEFAULT_USER_AGENT,
         timeout: float = 30.0,
+        ssl_context: ssl.SSLContext | None = None,
     ) -> None:
         """Initialize the async Linky client.
 
@@ -301,10 +327,12 @@ class AsyncLinkyClient:
             prm: Specific PRM to use (optional, defaults to first PRM in token)
             user_agent: User-Agent header for API requests
             timeout: Request timeout in seconds
+            ssl_context: Pre-created SSL context (optional, avoids blocking I/O)
         """
         self._token = token
         self._user_agent = user_agent
         self._timeout = timeout
+        self._ssl_context = ssl_context
         self._client: httpx.AsyncClient | None = None
 
         self._prms = _extract_prms(token)
@@ -337,6 +365,7 @@ class AsyncLinkyClient:
                     "Accept": "application/json",
                 },
                 timeout=self._timeout,
+                verify=self._ssl_context if self._ssl_context else True,
             )
         return self._client
 

@@ -1,6 +1,6 @@
 """pylinky - Python client for the Conso API (Linky smart meter data)."""
 
-from .client import AsyncLinkyClient, LinkyClient, linky_client
+from .client import AsyncLinkyClient, LinkyClient, create_ssl_context, linky_client
 from .exceptions import (
     APIError,
     AuthenticationError,
@@ -29,6 +29,7 @@ __all__ = [
     "LinkyClient",
     "AsyncLinkyClient",
     "linky_client",
+    "create_ssl_context",
     # Models
     "MeteringData",
     "IntervalReading",
