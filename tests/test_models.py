@@ -1,6 +1,6 @@
 """Tests for the data models."""
 
-from datetime import date
+from datetime import date, datetime
 
 import pytest
 
@@ -18,25 +18,25 @@ class TestIntervalReading:
         assert reading.interval_length is None
 
     def test_from_dict_datetime(self) -> None:
-        """Test parsing datetime string with T separator."""
+        """Test parsing datetime string with T separator keeps full datetime."""
         reading = IntervalReading.from_dict({
             "value": "456",
             "date": "2024-01-15T14:30:00",
             "interval_length": "PT30M",
         })
         assert reading.value == 456
-        assert reading.date == date(2024, 1, 15)
+        assert reading.date == datetime(2024, 1, 15, 14, 30, 0)
         assert reading.interval_length == "PT30M"
 
     def test_from_dict_datetime_space_separator(self) -> None:
-        """Test parsing datetime string with space separator."""
+        """Test parsing datetime string with space separator keeps full datetime."""
         reading = IntervalReading.from_dict({
             "value": "789",
             "date": "2025-12-24 00:30:00",
             "interval_length": "PT30M",
         })
         assert reading.value == 789
-        assert reading.date == date(2025, 12, 24)
+        assert reading.date == datetime(2025, 12, 24, 0, 30, 0)
         assert reading.interval_length == "PT30M"
 
     def test_from_dict_with_measure_type(self) -> None:

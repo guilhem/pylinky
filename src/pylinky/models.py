@@ -36,7 +36,7 @@ class IntervalReading:
     """A single reading interval."""
 
     value: int
-    date: date
+    date: date | datetime
     interval_length: str | None = None
     measure_type: str | None = None
 
@@ -47,7 +47,10 @@ class IntervalReading:
         # Handle both ISO format with T and space-separated format
         if "T" in date_str or " " in date_str:
             # Replace space with T for fromisoformat compatibility
-            parsed_date = datetime.fromisoformat(date_str.replace(" ", "T")).date()
+            # Keep full datetime for load curve data (30-min intervals)
+            parsed_date: date | datetime = datetime.fromisoformat(
+                date_str.replace(" ", "T")
+            )
         else:
             parsed_date = date.fromisoformat(date_str)
 
